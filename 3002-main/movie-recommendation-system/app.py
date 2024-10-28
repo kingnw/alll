@@ -153,41 +153,60 @@ def recommend():
     else:
         return render_template('index.html', recommendations=[])
 
-# Route to add movie to watchlist
-@app.route('/add_to_watchlist', methods=['POST'])
-def add_to_watchlist():
-    movie_id = request.form['movie_id']
+@app.route('/watchlist/add/<int:movie_id>', methods=['POST'])
+def add_to_watchlist(movie_id):
     if movie_id not in user_data['watchlist']:
         user_data['watchlist'].append(movie_id)
     return redirect(url_for('view_watchlist'))
 
-# Route to add movie to favorites
-@app.route('/add_to_favorites', methods=['POST'])
-def add_to_favorites():
-    movie_id = request.form['movie_id']
+@app.route('/favorites/add/<int:movie_id>', methods=['POST'])
+def add_to_favorites(movie_id):
     if movie_id not in user_data['favorites']:
         user_data['favorites'].append(movie_id)
     return redirect(url_for('view_favorites'))
 
-# Route to display user's watchlist
+@app.route('/watchlist', methods=['POST'])
+def remove_from_watchlist():
+    movie_id = request.form.get('movie_id')
+    print("Received movie ID:", movie_id)  # Debugging statement
+    if movie_id and int(movie_id) in user_data['watchlist']:
+        user_data['watchlist'].remove(int(movie_id))
+        print("Removed movie:", movie_id)  # Debugging statement
+    else:
+        print("Movie ID not found in watchlist")
+    return redirect(url_for('view_watchlist'))
+
+@app.route('/favorites', methods=['POST'])
+def remove_from_favorites():
+    movie_id = request.form.get('movie_id')
+    print("Received movie ID for removal from favorites:", movie_id)  # Debugging statement
+    if movie_id and int(movie_id) in user_data['favorites']:
+        user_data['favorites'].remove(int(movie_id))
+        print("Removed movie from favorites:", movie_id)  # Debugging statement
+    else:
+        print("Movie ID not found in favorites")
+    return redirect(url_for('view_favorites'))
+
 @app.route('/watchlist')
 def view_watchlist():
-    watchlist = user_data['watchlist']
-    if not watchlist:
+    watchlist_ids = user_data['watchlist']
+    watchlist_movies = [get_movie_details(movie_id) for movie_id in watchlist_ids if get_movie_details(movie_id)]
+    if not watchlist_movies:
         message = "Your watchlist is empty."
     else:
         message = None
-    return render_template('watchlist.html', watchlist=watchlist, message=message)
+    return render_template('watchlist.html', watchlist=watchlist_movies, message=message)
 
-# Route to display user's favorites
 @app.route('/favorites')
 def view_favorites():
-    favorites = user_data['favorites']
-    if not favorites:
+    favorite_ids = user_data['favorites']
+    favorite_movies = [get_movie_details(movie_id) for movie_id in favorite_ids if get_movie_details(movie_id)]
+    if not favorite_movies:
         message = "Your favorites list is empty."
     else:
         message = None
-    return render_template('favorites.html', favorites=favorites, message=message)
+    return render_template('favorites.html', favorites=favorite_movies, message=message)
+
 
 # Start the Flask app
 if __name__ == '__main__':
